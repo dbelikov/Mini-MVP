@@ -83,14 +83,21 @@
 
   (mvp/add-reader my-model [:value] #(.val (jq "#input-control") (:new-value %)))
   (mvp/add-reader my-model [:error] #(.html (jq "#error-message") (:new-value %)))
-  (mvp/add-writer my-model [:value]
-                  #(if (> (:new-value %) 120)
-                     (mvp/assoc-value my-model [:error] "Value too big to be true")
-                     (mvp/assoc-value my-model [:error] "")))
+
+  ;; generic input validation
+  (defn- age-validator
+    "Answers a text error message if the specified age is out of valid range.
+     Yields an empty string in case if the specified age appears to be correct."
+    [age]
+    (if (> age 120) "Value too big to be true" ""))
+
+  ;; bind input validation to age changes
+  (mvp/add-writer
+   my-model  ;; we subscribe to changes in my-model
+   [:value]  ;; at path ROOT -> :value
+   ;; and when a value under ROOT->:value changes, we update the value at ROOT->:error
+   #(mvp/assoc-value my-model [:error] (age-validator (:new-value %))))
 
   (.change (jq "#input-control") #(mvp/assoc-value my-model [:value] (. (jq "#input-control") (val))))
-
-  (> (mvp/get-value my-model [:value]) 0)
-  
-  (mvp/get-value my-model [])
+  (.keyup (jq "#input-control") #(mvp/assoc-value my-model [:value] (. (jq "#input-control") (val))))
 )

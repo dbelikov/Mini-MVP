@@ -1,86 +1,204 @@
-
-Introduction
-
-The main goal for Mini-MVP (Model View Presenter) library is to clearly separate your models from business logic and UI representation while maintaining their relationships in a concise and well-defined manner.
-
-Let's say you have some data model that you'd like to use.
-(def my-model (mvp/create { :type Text :hint "Enter your age" :value "1234" :error "Value too big to be true" }))
-
-You define a control that will render the text from the model. I'm using jQuery here, the sample also demonstrates Closure.
-
-;; Defines a subscriber that will update control's value if the model changes.
-(mvp/add-reader text-model [:text] #(.val (jq "#text2") (:new-value %)))
-
-;; In a similar way, we also render the error message
-(mvp/add-reader my-model [:error] #(.html (jq "#error-message") (:new-value %)))
-
-;; let's update the error message if the age exceeds 120
-(mvp/add-writer my-model [:value]
-                  #(if (> (:new-value %) 120)
-                     (mvp/assoc-value my-model [:error] "Value too big to be true")
-                     (mvp/assoc-value my-model [:error] "")))
-
-;; finally, update the model when the age is changed
-(.change (jq "#input-control") #(mvp/assoc-value my-model [:value] (. (jq "#input-control") (val))))
-
-Now, if you enter any age less than 120, the error message is cleared. Enter more than 120 and it'll show up again.
-
-
-
-
-API
-
-create <some clojure data model> <optional initial version> <optional function to suggest the next version given the current>
-       Creates a new MVP model
-
-create-ref <existing MVP mode> <path in the model>
-       Creates a model that references a subpath in the parent model
-
-get-version <MVP model>
-       Answers the current version of the model. Each change causes version change.
-       Assigning equal values is a no-op that doesn't cause version change.
-
-get-value <MVP model> [path] <optional default value>
-       Similar to clojure.core/get-in, gets the value in the model under the specified path.
-       Empty path fetches the root of the model.
-
-update-value <MVP model> [path] <function to apply> <additional arguments to the function ...>
-       Similar to clojure.core/update-in, updates the model's value under the specified path. The specified function is invoked to get the new value.
-       Producing equal value will be considered a no-op.
-
-assoc-value <MVP model> [path] <new-value>
-       Similar to clojure.core/assoc-in, associates a new value with the sub-model at the specified path.
-       Producing equal value will be considered a no-op.
-
-add-writer <MVP model> [path] <subscriber function>
-       Adds a 1st phase function that will be invoked if the value under the specified path changes.
-       The function is not invoked if the change(s) didn't cause value change.
-       I.e. given a model { :first "CA" :second "NY" } which is being updated to { :first "WA" :second "NY" }, 
-       the subscriber for :second isn't invoked. The subscribers for [] and [:first] are to be called.
-
-add-reader <MVP model> [path] <subscriber function>
-       Exactly the same as add-writer, but these folks are invoked after all writers. 
-       The idea is to avoid unnecessary UI rendering/flickering while validators/statistics get updated.
-
-clear <MVP model> [path]
-       Eliminates all subscribers under the specified path.
-
-delay-events <MVP model> <function>
-       All subscriber calls are delayed until after the function completes.
-       Only subscribers which guarded value has changed will be called.
-       I.e. given a subscriber for path=[1] in a model ["a" "b" "c"], three subsequent changes within (delay-events ...)
-       ["a" "b" "c"] -> ["b" "c" "d"] -> ["e" "f" "g"] -> ["h" "b" "e"] won't trigger the subscriber.
-
-version <MVP model>
-       Returns the current version of the model. By default, a new unique identifier is generated after each actual change.
-       You can define the initial version and a function to generate new versions:
-       (mvp/create {...my data...} 12 inc)  ;; will start with version=12, which is incremented upon each change
-
-
-
-
-License
-
-Same as Clojure/ClojureScript.
-
-
+<h3>
+	Introduction</h3>
+<div id="cke_pastebin">
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		Mini-MVP (Model View Presenter) library serves as a clean isolation layer among data models (Model), business logic (Presenter) and UI representation (View).</div>
+	<div id="cke_pastebin">
+		Any model that supports ILookup protocol can be used as a composite model, which comprises other composite and atomic model.</div>
+	<div id="cke_pastebin">
+		Model that doesn&#39;t support ILookup protocol is atomic model as far as Mini-MVP is concerned.</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		Mini-MVP strives for keeping all relationships among M-V-P components and composite MVP triads well-defined and concise.</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		Let&#39;s say you have some data model that you&#39;d like to use.</div>
+	<div id="cke_pastebin">
+		(def my-model (mvp/create { :type Text :hint &quot;Enter your age&quot; :value &quot;1234&quot; :error &quot;Value too big to be true&quot; }))</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		Let&#39;s bind this model onto a view that renders the text and the error from the model. I&#39;m using jQuery here, the demo also uses Closure.</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		;; Defines a subscriber that updates a control&#39;s value if the model changes.</div>
+	<div id="cke_pastebin">
+		(mvp/add-reader text-model [:text] #(.val (jq &quot;#text2&quot;) (:new-value %)))</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		;; In a similar way, we also render the error message, which is generated by a validator</div>
+	<div id="cke_pastebin">
+		(mvp/add-reader my-model [:error] #(.html (jq &quot;#error-message&quot;) (:new-value %)))</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		;; let&#39;s assume we have a generic age validation function</div>
+	<div id="cke_pastebin">
+		(defn- age-validator</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &quot;Answers a text error message if the specified age is out of valid range.</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp;Yields an empty string in case if the specified age appears to be correct.&quot;</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; [age]</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; (if (&gt; age 120) &quot;Value too big to be true&quot; &quot;&quot;))</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		;; let&#39;s use the age validation function in our model</div>
+	<div id="cke_pastebin">
+		(mvp/add-writer</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp;my-model &nbsp;;; we subscribe to changes in my-model</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp;[:value] &nbsp;;; at path ROOT -&gt; :value</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp;;; and when a value under ROOT-&gt;:value changes, we update the value at ROOT-&gt;:error</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp;#(mvp/assoc-value my-model [:error] (age-validator (:new-value %))))</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		;; finally, update the model when the age is changed</div>
+	<div id="cke_pastebin">
+		(.change (jq &quot;#input-control&quot;) #(mvp/assoc-value my-model [:value] (. (jq &quot;#input-control&quot;) (val))))</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		Now, if you enter any age less than 120, the error message is cleared. Enter more than 120 and it&#39;ll show up again.</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<h3>
+		API</h3>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		create &lt;some clojure data model&gt; &lt;optional initial version&gt; &lt;optional function to suggest the next version given the current&gt;</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;Creates a new MVP model.</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		create-ref &lt;existing MVP mode&gt; &lt;path in the model&gt;</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;Creates a model that redirects to a subpath in the parent model.</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		get-version &lt;MVP model&gt;</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;Answers the current version of the model. Each change causes version change.</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		get-value &lt;MVP model&gt; [path] &lt;optional default value&gt;</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;Similar to clojure.core/get-in, gets the value in the model under the specified path.</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;Empty path [] fetches the root of the model.</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		update-value &lt;MVP model&gt; [path] &lt;function to apply&gt; &lt;additional arguments to the function ...&gt;</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;Similar to clojure.core/update-in, updates the model&#39;s value under the specified path. The specified function is invoked to get the new value.</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;Producing equal value is considered a no-op.</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		assoc-value &lt;MVP model&gt; [path] &lt;new-value&gt;</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;Similar to clojure.core/assoc-in, associates a new value with the sub-model at the specified path.</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;Assigning equal value is considered a no-op.</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		add-writer &lt;MVP model&gt; [path] &lt;subscriber function&gt;</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;Adds a 1st phase subscriber function that is invoked when the value under the specified path changes.</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;The function is not invoked if the change(s) didn&#39;t cause actual value change.</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;I.e. given a model { :first &quot;CA&quot; :second &quot;NY&quot; } which is being updated to { :first &quot;WA&quot; :second &quot;NY&quot; },&nbsp;</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;the subscriber for [:second] isn&#39;t invoked. The subscribers for [] and [:first] are to be called.</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;A subscriber is a function that receives a single parameter { :new-value &lt;new-value&gt; :old-value &lt;old-value&gt; :new-version &lt;new-model-version&gt; }.</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		add-reader &lt;MVP model&gt; [path] &lt;subscriber function&gt;</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;Exactly the same as add-writer, but these folks are invoked after all writers.&nbsp;</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;The idea is to avoid unnecessary UI rendering/flickering while validators/statistics update the model.</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;A subscriber is a function that receives a single parameter { :new-value &lt;new-value&gt; :old-value &lt;old-value&gt; :new-version &lt;new-model-version&gt; }.</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		clear &lt;MVP model&gt; [path]</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;Eliminates all subscribers under the specified path.</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;(clear my-model []) ;; eliminates all existing subscribers</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		delay-events &lt;MVP model&gt; &lt;function&gt;</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;All subscriber calls are delayed until after the function completion.</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;Only subscribers which guarded value has actually changed are called.</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;I.e. given a subscriber for path=[1] in a model [&quot;a&quot; &quot;b&quot; &quot;c&quot;], three subsequent changes within (delay-events ...)</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;[&quot;a&quot; &quot;b&quot; &quot;c&quot;] -&gt; [&quot;b&quot; &quot;c&quot; &quot;d&quot;] -&gt; [&quot;e&quot; &quot;f&quot; &quot;g&quot;] -&gt; [&quot;h&quot; &quot;b&quot; &quot;e&quot;] won&#39;t trigger the subscriber (which is subscribed for &quot;b&quot;).</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		version &lt;MVP model&gt;</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;Returns the current version of the model. By default, a new unique identifier is generated after each actual change.</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;You can define the initial version and a function to generate new versions:</div>
+	<div id="cke_pastebin">
+		&nbsp; &nbsp; &nbsp; &nbsp;(mvp/create {...my data...} 12 inc) &nbsp;;; will start with version=12, which is incremented upon each change</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<h3>
+		License</h3>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		Same as Clojure/ClojureScript.</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+	<div id="cke_pastebin">
+		&nbsp;</div>
+</div>

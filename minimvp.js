@@ -16908,14 +16908,18 @@ minimvp.demo.demo = function() {
   minimvp.core.add_reader.call(null, minimvp.demo.my_model, cljs.core.Vector.fromArray(["\ufdd0'error"]), function(a) {
     return minimvp.demo.jq.call(null, "#error-message").html("\ufdd0'new-value".call(null, a))
   });
+  minimvp.demo.age_validator = function(a) {
+    return cljs.core.truth_(a > 120) ? "Value too big to be true" : ""
+  };
   minimvp.core.add_writer.call(null, minimvp.demo.my_model, cljs.core.Vector.fromArray(["\ufdd0'value"]), function(a) {
-    return cljs.core.truth_("\ufdd0'new-value".call(null, a) > 120) ? minimvp.core.assoc_value.call(null, minimvp.demo.my_model, cljs.core.Vector.fromArray(["\ufdd0'error"]), "Value too big to be true") : minimvp.core.assoc_value.call(null, minimvp.demo.my_model, cljs.core.Vector.fromArray(["\ufdd0'error"]), "")
+    return minimvp.core.assoc_value.call(null, minimvp.demo.my_model, cljs.core.Vector.fromArray(["\ufdd0'error"]), minimvp.demo.age_validator.call(null, "\ufdd0'new-value".call(null, a)))
   });
   minimvp.demo.jq.call(null, "#input-control").change(function() {
     return minimvp.core.assoc_value.call(null, minimvp.demo.my_model, cljs.core.Vector.fromArray(["\ufdd0'value"]), minimvp.demo.jq.call(null, "#input-control").val())
   });
-  minimvp.core.get_value.call(null, minimvp.demo.my_model, cljs.core.Vector.fromArray(["\ufdd0'value"]));
-  return minimvp.core.get_value.call(null, minimvp.demo.my_model, cljs.core.Vector.fromArray([]))
+  return minimvp.demo.jq.call(null, "#input-control").keyup(function() {
+    return minimvp.core.assoc_value.call(null, minimvp.demo.my_model, cljs.core.Vector.fromArray(["\ufdd0'value"]), minimvp.demo.jq.call(null, "#input-control").val())
+  })
 };
 goog.exportSymbol("minimvp.demo.demo", minimvp.demo.demo);
 minimvp.unittests = {};

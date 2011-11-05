@@ -1,0 +1,33 @@
+<html>
+  <head>
+    <title>Mini-MVP ClojureScript Library Unit Tests</title>
+    <link type="text/css" rel="stylesheet" href="css/common.css">
+    <link type="text/css" rel="stylesheet" href="css/demo.css">
+    <link type="text/css" rel="stylesheet" href="css/colormenubutton.css">
+    <link type="text/css" rel="stylesheet" href="css/menubutton.css">
+    <link rel="stylesheet" href="css/roundedtab.css">
+    <link rel="stylesheet" href="css/tab.css">
+    <link rel="stylesheet" href="css/tabbar.css">
+    <link rel="stylesheet" href="css/qunit-git.css">
+  </head>
+
+  <body>
+    <!-- QUnit stuff -->
+    <h1 id="qunit-header">QUnit example</h1>
+    <h2 id="qunit-banner"></h2>
+    <div id="qunit-testrunner-toolbar"></div>
+    <h2 id="qunit-userAgent"></h2>
+    <ol id="qunit-tests"></ol>
+    <div id="qunit-fixture">test markup, will be hidden</div>
+
+    <!-- load the scripts, they will run unit tests and hook up to the rest of the page -->
+    <script type="text/javascript" src="out/goog/base.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+    <script type="text/javascript" src="lib/qunit-git.js"></script>
+    <script type="text/javascript" src="minimvp.js"></script>
+    <script>
+      goog.require('minimvp.unittests.main');
+      minimvp.unittests.tests();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,2 @@
+#!/bin/bash
+cljs-watch src/ '{:output-to "minimvp.js" :externs ["lib/jquery-1.6.4.js" "lib/qunit-git.js"]}'

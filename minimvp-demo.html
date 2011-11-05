@@ -1,0 +1,53 @@
+<html>
+  <head>
+    <title>Mini-MVP ClojureScript Library Unit Tests</title>
+    <link type="text/css" rel="stylesheet" href="css/common.css">
+    <link type="text/css" rel="stylesheet" href="css/demo.css">
+    <link type="text/css" rel="stylesheet" href="css/colormenubutton.css">
+    <link type="text/css" rel="stylesheet" href="css/menubutton.css">
+    <link rel="stylesheet" href="css/roundedtab.css">
+    <link rel="stylesheet" href="css/tab.css">
+    <link rel="stylesheet" href="css/tabbar.css">
+    <link rel="stylesheet" href="css/qunit-git.css">
+  </head>
+
+  <body>
+    <!-- Demo stuff -->
+    <hr>
+    <h1>MiniMVP DEMO!</h1>
+
+    <!-- Entering/dealing with text -->
+    <div id="text">
+      <!-- Closure -->
+      <input id="text1" type="text">
+
+      <!-- via jQuery -->
+      <input id="text2" type="text">
+    </div>
+
+	<hr>
+
+    <!-- Checkboxes/boolean -->
+    <div id="boolean model">
+    </div>
+    <!-- The buttons will go in here-->
+    <div id="buttons"></div>
+    
+    <!-- The demo area -->
+    <hr>
+    <div id="error">
+    	Error:&nbsp;<span id="error-message">Some error</span>
+    </div>
+    <p>Enter your age:&nbsp;<input id="input-control"></p>
+
+    <!-- load the scripts, they will run unit tests and hook up to the rest of the page -->
+    <script type="text/javascript" src="out/goog/base.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+    <script type="text/javascript" src="lib/qunit-git.js"></script>
+    <script type="text/javascript" src="minimvp.js"></script>
+    <script>
+      goog.require('minimvp.demo.demo');
+      minimvp.demo.demo();
+    </script>
+  </body>
+</html>

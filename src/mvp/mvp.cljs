@@ -1,12 +1,30 @@
-;;   Copyright (c) Dmitry Belikov. All rights reserved.
-;;   The use and distribution terms for this software are covered by the
-;;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
-;;   By using this software in any fashion, you are agreeing to be bound by
-;;   the terms of this license.
-;;   You must not remove this notice, or any other, from this software.
-(ns minimvp.core
+;; Copyright (c) Dmitry Belikov. All rights reserved.
+;;
+;; (clj->json clojure-object) => JSON string
+;; (json-clj json-string) => clojure-object
+;; (generate-unique-version) => 16-character random string
+;; (fail-loudly string-message) => into browser log and pop-up alert
+;;
+;; (create clj-map) => creates MVP model
+;; (create clj-map initial-version versionion-fn) => creates MVP model with custom versioning
+;; (create-ref mvp-model base-path) => creates MVP sub-model
+;;
+;; (get-value mvp-model path) => extracts value under that path
+;; (version mvp-model) => current version of the model
+;;
+;; (fn [{:keys [old-value new-value new-version]}] ..) - subscriber function
+;; (add-writer mvp-model path (fn [])) => subscribers that change the model
+;; (add-reader mvp-model path (fn [])) => subscribers that do not change the model
+;; (delay-events mvp-model (fn [] ...)) => delays all events up until function completes
+;; (clear mvp-model path) => removes all subscribers which path starts with the path
+;;
+;; (update-value mvp-model path (fn [cur-value args] ...) args)
+;; (assoc-value mvp-model path new-value) => stamps the new value at the path
+;;
+(ns fc.mvp
   (:require
-   [clojure.browser.dom :as cdom]))
+   [clojure.browser.dom :as cdom]
+   [goog.json :as gjson]))
 
 (defn- iterate-while
   "Executes the specified function against each element in the sequence as long as the condition is met.
@@ -34,8 +52,8 @@
   (cond
    (string? x) x
    (keyword? x) (name x)
-   (map? x) (.strobj (reduce (fn [m [k v]]
-                               (assoc m (clj->js k) (clj->js v))) {} x))
+   (map? x) (.-strobj (reduce (fn [m [k v]]
+                                (assoc m (clj->js k) (clj->js v))) {} x))
    (coll? x) (apply array (map clj->js x))
    :else x))
 
@@ -43,6 +61,11 @@
   "Transforms a clojure object into a JSON string"
   [model]
   (goog.json.serialize (clj->js model)))
+
+(defn json->clj
+  "Transforms a JSON string into ClojureScript data structure"
+  [json]
+  (js->clj (gjson/unsafeParse (clj->json json))))
 
 (defn- int->char
   "Converts an integer into the corresponding ASCII character"
@@ -52,7 +75,7 @@
   "Answers a random character from 32-127 ANSI range each time it is called"
   [] (int->char (Math/floor (+ (* (Math/random) (- 125 32)) 33))))
 
-(defn- generate-unique-version
+(defn generate-unique-version
   "Generates a random string that is highly unlikely to be ever reproduced"
   [] (apply str (take 16 (repeatedly get-random-char))))
 
@@ -176,10 +199,10 @@
         (do
           ;; call subscribers if any change occurred
           (if (not= old-version (first @(:model mvp-object)))
-            
+
             ;; TODO: detect infinite (>200) loops, print out last 20 paths
             (while (not
-                    (and 
+                    (and
                      (trigger-subscribers mvp-object @(:writers mvp-object))
                      (trigger-subscribers mvp-object @(:readers mvp-object))))))
           (reset! scan-signal false)))
@@ -220,7 +243,7 @@
   "Updates the value in the nested MVP model, similar to core/update-in."
   [mvp path func & args]
   (let [[mvp-object full-path] (resolve-mvp-ref mvp path)
-        old-value (get-value mvp-object fullpath)
+        old-value (get-value mvp-object full-path)
         new-value (apply func old-value args)]
     (delay-events mvp #(set-value-basic mvp-object full-path new-value))
     new-value))
